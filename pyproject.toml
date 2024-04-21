@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "tweepy-manager"
+version = "0.1.0"
+description = "Twitter accounts manager"
+authors = ["Alen <alen.kimov@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+tweepy-self = {version="1.10.0b9", allow-prereleases=true}
+better-proxy = {version="1.2.0b1", allow-prereleases=true}
+questionary = "^2"
+tqdm = "^4.66"
+openpyxl = "^3.1.2"
+sqlalchemy = "^2"
+aiosqlite = "^0.20"
+alembic = "^1.13"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

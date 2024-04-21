@@ -1,0 +1,8 @@
+**/__pycache__
+.idea
+.venv
+log
+input
+output
+config/*
+!config/.default
