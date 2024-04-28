@@ -7,7 +7,7 @@ from common.sqlalchemy.crud import update_or_create
 
 from tweepy_manager.paths import INPUT_DIR
 from tweepy_manager.excell import excell
-from tweepy_manager.database import AsyncSessionmaker, TwitterAccount, Proxy
+from tweepy_manager.database import AsyncSessionmaker, TwitterAccount, Proxy, Tag
 
 
 async def select_and_import_table():
@@ -43,6 +43,17 @@ async def select_and_import_table():
             if created: print("(NEW!) ", end="")
             print(repr(twitter_account))
 
+            if country_code := twitter_account_data.get("country_code"):  # type: str
+                twitter_account.country_code = country_code.lower()
+
+            await session.commit()
+
+            if raw_tags := twitter_account_data["tags"]:  # type: str
+                print(f"\tTags: {raw_tags}")
+                for tag_name in raw_tags.split(","):  # type: str
+                    tag_name = tag_name.strip()
+                    await session.merge(Tag(twitter_account_id=twitter_account.database_id, tag=tag_name))
+
             if twitter_account_data["proxy"]:
                 parsed_proxy = parse_proxy_str(twitter_account_data["proxy"])
                 parsed_proxy["protocol"] = parsed_proxy["protocol"] or "http"
@@ -53,4 +64,4 @@ async def select_and_import_table():
                     print("\t")
                 print(repr(twitter_account.proxy))
 
-        await session.commit()
+            await session.commit()

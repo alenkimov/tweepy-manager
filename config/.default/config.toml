@@ -8,6 +8,7 @@ DELAY_BETWEEN_RETRIES = 5  # sec.
 
 [REQUESTS]
 TIMEOUT = 10  # sec.
+REQUIRE_PROXY = true
 
 [TWITTER]
 AUTO_RELOGIN = true

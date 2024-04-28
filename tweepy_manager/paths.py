@@ -14,6 +14,7 @@ DEFAULT_CONFIG_DIR = CONFIG_DIR / ".default"
 
 # Input
 INPUT_DIR = BASE_DIR / "input"
+OUTPUT_DIR = BASE_DIR / "output"
 
 # Database
 DATABASES_DIR = INPUT_DIR / ".db"
@@ -21,7 +22,7 @@ DATABASE_FILEPATH = DATABASES_DIR / "twitter.db"
 ALEMBIC_INI = BASE_DIR / "alembic.ini"
 
 # Creating dirs and files
-_dirs = (INPUT_DIR, DATABASES_DIR, LOG_DIR)
+_dirs = (INPUT_DIR, OUTPUT_DIR, DATABASES_DIR, LOG_DIR)
 
 for dirpath in _dirs:
     dirpath.mkdir(exist_ok=True)

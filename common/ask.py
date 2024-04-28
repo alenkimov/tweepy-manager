@@ -55,6 +55,33 @@ async def ask_int(message: str = "Enter value (int):", min: int = None, max: int
 
 
 async def ask_filename(message: str = "Enter filename:", default: str = "", blacklist: Iterable[str] = None) -> str:
-    filename = await questionary.text(
-        message, default=default, validate=lambda text: _validate_filename(text, blacklist)).ask_async()
-    return filename
+    return await questionary.text(
+        message,
+        default=default,
+        validate=lambda text: _validate_filename(text, blacklist)
+    ).ask_async()
+
+
+async def ask_nonempty_text(message: str = "Enter text:") -> str:
+    return await questionary.text(
+        message,
+        validate=lambda text: True if text else "Non-empty input!"
+    ).ask_async()
+
+
+async def ask_values_with_separator(
+        prompt: str = "Enter values:",
+        instruction: str = None,
+        separator=" ",
+        strip: bool = True,
+):
+    if instruction:
+        print(instruction)
+    else:
+        print(f"Enter values separated by `{separator}`")
+        print(f"Example: {separator.join(('value1', 'value2', 'value3'))}")
+
+    input_text = await ask_nonempty_text(prompt)
+    if strip:
+        input_text = input_text.strip()
+    return input_text.split(separator)

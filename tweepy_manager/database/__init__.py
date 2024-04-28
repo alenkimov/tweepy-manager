@@ -6,6 +6,9 @@ from .models import (
     TwitterAccount,
     TwitterUser,
     Proxy,
+    Tweet,
+    Following,
+    Tag,
 )
 from .utils import (
     update_database_or_quite,
@@ -17,5 +20,8 @@ __all__ = [
     "TwitterAccount",
     "TwitterUser",
     "Proxy",
+    "Tweet",
+    "Following",
+    "Tag",
     "update_database_or_quite",
 ]

@@ -17,6 +17,7 @@ class ConcurrencyConfig(BaseModel):
 
 class RequestsConfig(BaseModel):
     TIMEOUT: int = 30
+    REQUIRE_PROXY: bool = True
 
 
 class TwitterConfig(BaseModel):
