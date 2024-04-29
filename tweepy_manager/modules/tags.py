@@ -2,24 +2,27 @@ import questionary
 from loguru import logger
 
 from ..database import AsyncSessionmaker, Tag
-from ..database.crud import ask_and_get_accounts, get_tags
+from ..database.crud import ask_and_get_accounts, get_tags, choose_accounts
 
 
 async def add_tag():
     async with AsyncSessionmaker() as session:
-        twitter_accounts = await ask_and_get_accounts(session, statuses=(
-            "GOOD", "UNKOWN", "BAD_TOKEN", "LOCKED", "CONSENT_LOCKED", "SUSPENDED"))
+        twitter_accounts = await ask_and_get_accounts(
+            session,
+            statuses=(
+                "GOOD",
+                "UNKNOWN",
+                "BAD_TOKEN",
+                "LOCKED",
+                "CONSENT_LOCKED",
+                "SUSPENDED",
+            ),
+        )
 
     if not twitter_accounts:
         return
 
-    # TODO           Выводить также: proxy, tags, status, id
-    accounts_dict = {str(account): account for account in twitter_accounts}
-    chosen_accounts = await questionary.checkbox(
-        "Choose accounts:",
-        choices=accounts_dict,
-        validate=lambda choices: True if choices else "Select at least one account!"
-    ).ask_async()
+    twitter_accounts = await choose_accounts(twitter_accounts)
 
     tags = await get_tags(session)
     print(f"Existing tags: {', '.join(tags)}")
@@ -27,8 +30,7 @@ async def add_tag():
     tag = tag.strip()
 
     async with AsyncSessionmaker() as session:
-        for choice in chosen_accounts:
-            account = accounts_dict[choice]
+        for account in twitter_accounts:
             await session.merge(Tag(twitter_account_id=account.database_id, tag=tag))
         await session.commit()
 

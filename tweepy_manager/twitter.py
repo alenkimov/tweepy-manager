@@ -1,8 +1,12 @@
+import asyncio
+import random
+
+from loguru import logger
+from common.sqlalchemy.crud import update_or_create
+from sqlalchemy import select
 import twitter
 
 from .config import CONFIG
-
-from common.sqlalchemy.crud import update_or_create
 from .database import (
     AsyncSessionmaker,
     TwitterAccount,
@@ -10,6 +14,15 @@ from .database import (
     Following,
     Tweet,
 )
+
+
+async def sleep_between_actions(twitter_account: TwitterAccount):
+    sleep_time = random.randint(*CONFIG.CONCURRENCY.DELAY_BETWEEN_ACTIONS)
+    if not sleep_time:
+        return
+
+    logger.info(f"@{twitter_account.username} (id={twitter_account.user.id}) Sleep time: {sleep_time} seconds")
+    await asyncio.sleep(sleep_time)
 
 
 class TwitterClient(twitter.Client):
@@ -30,6 +43,7 @@ class TwitterClient(twitter.Client):
             totp_secret=self.db_account.totp_secret,
             backup_code=self.db_account.backup_code,
             status=self.db_account.status,
+            id=twitter_account.user.id,
         )
         super().__init__(
             account,
@@ -72,6 +86,8 @@ class TwitterClient(twitter.Client):
             *,
             media_id: int | str = None,
     ) -> Tweet:
+        # TODO Когда этот метод будет принимать tweet_id, а не tweet_url,
+        #   не делать твит, если в бд уже есть об этом информация
         tweet = await self.quote(tweet_url, text, media_id=media_id)
 
         db_tweet = Tweet.from_pydantic_model(tweet)
@@ -79,19 +95,37 @@ class TwitterClient(twitter.Client):
             await session.merge(db_tweet)
             await session.commit()
 
+        await sleep_between_actions(self.db_account)
         return db_tweet
 
-    async def follow(self, user_id: str | int):
-        # TODO Не подписываться, если в бд есть об этом информация
-        followed = await super().follow(user_id)
+    async def follow_and_save(self, user: twitter.User) -> bool:
+        async with AsyncSessionmaker() as session:
+            query = select(Following).options(
+            ).filter_by(
+                user_id=self.account.id,
+                followed_to_user_id=user.id,
+            )
+            if await session.scalar(query):
+                logger.warning(f"@{self.account.username} (id={self.account.id})"
+                               f" User (id={user.id}) already followed")
+                return True
+
+        followed = await super().follow(user.id)
         if followed:
+            logger.success(f"@{self.account.username} (id={self.account.id})"
+                           f" Followed: @{user.username} (id={user.id})")
             async with AsyncSessionmaker() as session:
-                session.add(Following(user_id=self.account.id, followed_to_user_id=user_id))
+                session.add(Following(user_id=self.account.id, followed_to_user_id=user.id))
                 await session.commit()
 
-    async def unfollow(self, user_id: str | int):
-        followed = await super().unfollow(user_id)
-        if followed:
+        await sleep_between_actions(self.db_account)
+        return followed
+
+    async def unfollow_and_save(self, user_id: str | int):
+        unfollowed = await super().unfollow(user_id)
+        if unfollowed:
             async with AsyncSessionmaker() as session:
                 await session.delete(Following(user_id=self.account.id, followed_to_user_id=user_id))
                 await session.commit()
+        await sleep_between_actions(self.db_account)
+        return unfollowed

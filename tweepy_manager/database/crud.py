@@ -1,3 +1,5 @@
+from typing import Sequence
+
 import questionary
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
@@ -9,14 +11,10 @@ from .models import TwitterAccount, Tag
 from ..config import CONFIG
 
 
-# UNTAGGED = "untagged"
-
-
 async def get_accounts(
         session: AsyncSession,
-        statuses: tuple[twitter.AccountStatus] = None,
-        tags: tuple[str] = None,
-        # untagged: bool = False,
+        statuses: Sequence[twitter.AccountStatus] = None,
+        tags: Sequence[str] = None,
 ) -> list[TwitterAccount]:
     query = select(TwitterAccount).options(
         joinedload(TwitterAccount.proxy),
@@ -42,8 +40,6 @@ async def get_accounts(
         log_message += f"\n\tЗапрашиваемые статусы: {statuses}"
     if tags:
         log_message += f"\n\tЗапрашиваемые теги: {tags}"
-    # if untagged:
-    #     log_message += "\n\tЗапрошены аккаунты без тегов включительно"
     logger.log(level, log_message)
 
     if CONFIG.REQUESTS.REQUIRE_PROXY:
@@ -59,23 +55,45 @@ async def get_tags(session: AsyncSession) -> list[str]:
     return list(await session.scalars(select(Tag.tag).distinct()))
 
 
-async def ask_and_get_accounts(
-        session: AsyncSession,
-        statuses: tuple[twitter.AccountStatus] = ("UNKNOWN", "GOOD"),
-) -> list[TwitterAccount]:
-    tags = await get_tags(session)
+async def choose_accounts(twitter_accounts: Sequence[TwitterAccount]) -> list[TwitterAccount]:
+    # TODO           Выводить также: proxy, tags, status, id
+    accounts_dict = {str(account): account for account in twitter_accounts}
+    choices = await questionary.checkbox(
+        "Choose accounts:",
+        choices=accounts_dict,
+        validate=lambda choices: True if choices else "Select at least one account!"
+    ).ask_async()
+    return [accounts_dict[choice] for choice in choices]
 
-    selected_tags = await questionary.checkbox(
+
+async def choose_statuses(
+        statuses: Sequence[twitter.AccountStatus | str] = ("UNKNOWN", "GOOD"),
+) -> list[twitter.AccountStatus]:
+    return await questionary.checkbox(
+        "Choose statuses",
+        choices=statuses,
+        validate=lambda choices: True if choices else "Select at least one status!"
+    ).ask_async()
+
+
+async def choose_tags(tags: Sequence[str]) -> list[str]:
+    return await questionary.checkbox(
         "Choose tags:",
         choices=tags,
         validate=lambda choices: True if choices else "Select at least one tag!"
     ).ask_async()
 
-    if len(statuses) > 1:
-        statuses = await questionary.checkbox(
-            "Choose statuses",
-            choices=statuses,
-            validate=lambda choices: True if choices else "Select at least one status!"
-        ).ask_async()
 
-    return await get_accounts(session, statuses=statuses, tags=selected_tags)
+async def ask_and_get_accounts(
+        session: AsyncSession,
+        statuses: Sequence[twitter.AccountStatus | str] | None = ("UNKNOWN", "GOOD"),
+) -> list[TwitterAccount]:
+    tags = await get_tags(session)
+    tags = await choose_tags(tags)
+
+    if statuses and len(statuses) > 1:
+        statuses = await choose_statuses(statuses)
+
+    twitter_accounts = await get_accounts(session, statuses=statuses, tags=tags)
+    twitter_accounts = await choose_accounts(twitter_accounts)
+    return twitter_accounts

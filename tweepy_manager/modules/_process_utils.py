@@ -13,31 +13,14 @@ from ..twitter import TwitterClient
 from ..config import CONFIG
 
 
-async def sleep_between_actions(twitter_account: TwitterAccount):
-    sleep_time = random.randint(*CONFIG.CONCURRENCY.DELAY_BETWEEN_ACTIONS)
-    if not sleep_time:
+async def sleep_between_retries(twitter_account: TwitterAccount, retries: int):
+    if not CONFIG.CONCURRENCY.DELAY_BETWEEN_RETRIES:
         return
 
-    logger.info(f"@{twitter_account.username} (id={twitter_account.user.id}) Sleep time: {sleep_time} seconds")
-    await asyncio.sleep(sleep_time)
-
-
-async def sleep_between_accounts():
-    sleep_time = random.randint(*CONFIG.CONCURRENCY.DELAY_BETWEEN_ACCOUNTS)
-    if not sleep_time:
-        return
-
-    logger.info(f"Sleep time: {sleep_time} seconds")
-    await asyncio.sleep(sleep_time)
-
-
-async def sleep_between_retries(twitter_account: TwitterAccount):
-    sleep_time = random.randint(*CONFIG.CONCURRENCY.DELAY_BETWEEN_RETRIES)
-    if not sleep_time:
-        return
-
-    logger.info(f"@{twitter_account.username} (id={twitter_account.user.id}) Sleep time: {sleep_time} seconds")
-    await asyncio.sleep(sleep_time)
+    logger.info(f"@{twitter_account.username} (id={twitter_account.user.id})"
+                f" Sleep time: {CONFIG.CONCURRENCY.DELAY_BETWEEN_RETRIES} seconds."
+                f"\n\tОсталось попыток: {retries}")
+    await asyncio.sleep(CONFIG.CONCURRENCY.DELAY_BETWEEN_RETRIES)
 
 
 async def process_twitter_accounts(fn: Callable, twitter_accounts: Iterable[TwitterAccount]):
@@ -78,13 +61,7 @@ async def process_twitter_accounts(fn: Callable, twitter_accounts: Iterable[Twit
 
             retries -= 1
             if retries > 0:
-                # Пауза перед следующей попыткой
-                sleep_time = CONFIG.CONCURRENCY.DELAY_BETWEEN_RETRIES
-                logger.warning(f"{twitter_account}"
-                               f" Не удалось завершить выполнение."
-                               f" Повторная попытка через {sleep_time}s."
-                               f" Осталось попыток: {retries}.")
-                await asyncio.sleep(sleep_time)
+                await sleep_between_retries(twitter_account, retries)
 
     if CONFIG.CONCURRENCY.MAX_TASKS > 1:
         # Create a semaphore with the specified max tasks
