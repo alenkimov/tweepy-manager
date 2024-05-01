@@ -11,7 +11,7 @@ from common.logger import setup_logger
 from tweepy_manager.paths import LOG_DIR
 from tweepy_manager.config import CONFIG
 from tweepy_manager.database import update_database_or_quite
-from tweepy_manager.modules.import_accounts import select_and_import_table
+from tweepy_manager.modules.import_accounts import select_and_import_table, export_to_xlsx
 from tweepy_manager.modules.request_accounts_info import update_accounts_info
 from tweepy_manager.modules.follow import follow
 from tweepy_manager.modules.quote_tweet import quote
@@ -21,6 +21,7 @@ from tweepy_manager.modules.tags import add_tag
 MODULES = {
     '❤️ Channel': open_channel,
     '➡️ Import accounts from .xlsx table': select_and_import_table,
+    '➡️ Export accounts to .xlsx table': export_to_xlsx,
     '➡️ Add tag': add_tag,
     '➡️ Update accounts info': update_accounts_info,
     '➡️ Follow': follow,

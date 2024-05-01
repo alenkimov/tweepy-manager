@@ -1,13 +1,19 @@
+import datetime
+
 from better_proxy import parse_proxy_str
 
 import questionary
 
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
+import openpyxl
+
 from common.excell import get_xlsx_filepaths, get_worksheets
 from common.sqlalchemy.crud import update_or_create
 
-from tweepy_manager.paths import INPUT_DIR
-from tweepy_manager.excell import excell
-from tweepy_manager.database import AsyncSessionmaker, TwitterAccount, Proxy, Tag
+from ..paths import INPUT_DIR, OUTPUT_DIR
+from ..excell import excell
+from ..database import AsyncSessionmaker, TwitterAccount, Proxy, Tag
 
 
 async def select_and_import_table():
@@ -65,3 +71,79 @@ async def select_and_import_table():
                 print(repr(twitter_account.proxy))
 
             await session.commit()
+
+
+async def export_to_xlsx():
+    """
+    Экспортирует все аккаунты из базы данных в Excell-таблицу.
+
+    Поля:
+    - status
+    - tags (Теги через запятую)
+    - proxy (Прокси в формате URL)
+    - country_code
+    - username
+    - id
+    - auth_token
+    - email
+    - email_password
+    - password
+    - totp_secret
+    - backup_code
+    """
+    async with AsyncSessionmaker() as session:
+        accounts = await session.scalars(select(TwitterAccount).options(
+            joinedload(TwitterAccount.proxy),
+            joinedload(TwitterAccount.user),
+        ))
+        accounts = list(accounts)
+
+    accounts = sorted(accounts, key=lambda account: account.status)
+
+    workbook = openpyxl.Workbook()
+    worksheet = workbook.active
+
+    now = datetime.datetime.now()
+    worksheet.title = now.strftime("%d.%m.%Y")
+
+    # Заголовки столбцов
+    worksheet["A1"] = "Status"
+    worksheet["B1"] = "Tags"
+    worksheet["C1"] = "Proxy"
+    worksheet["D1"] = "Country Code"
+    worksheet["E1"] = "Username"
+    worksheet["F1"] = "ID"
+    worksheet["G1"] = "Auth Token"
+    worksheet["H1"] = "Email"
+    worksheet["I1"] = "Email Password"
+    worksheet["J1"] = "Password"
+    worksheet["K1"] = "TOTP Secret"
+    worksheet["L1"] = "Backup Code"
+
+    # Заполнение данных
+    for row, account in enumerate(accounts, start=2):
+        worksheet.cell(row=row, column=1, value=account.status.value)
+
+        tags = await session.scalars(select(Tag).where(Tag.twitter_account_id == account.database_id))
+        tags = ", ".join([tag.tag for tag in tags])
+        worksheet.cell(row=row, column=2, value=tags)
+
+        if account.proxy:
+            proxy = account.proxy.better_proxy()
+            worksheet.cell(row=row, column=3, value=str(proxy))
+        else:
+            worksheet.cell(row=row, column=3, value="")
+
+        worksheet.cell(row=row, column=4, value=account.country_code)
+        worksheet.cell(row=row, column=5, value=account.username)
+        worksheet.cell(row=row, column=6, value=account.user.id if account.user else "")
+        worksheet.cell(row=row, column=7, value=account.auth_token)
+        worksheet.cell(row=row, column=8, value=account.email)
+        worksheet.cell(row=row, column=9, value=account.email_password)
+        worksheet.cell(row=row, column=10, value=account.password)
+        worksheet.cell(row=row, column=11, value=account.totp_secret)
+        worksheet.cell(row=row, column=12, value=account.backup_code)
+
+    export_dir = OUTPUT_DIR / "export"
+    export_dir.mkdir(exist_ok=True)
+    workbook.save(export_dir / f"twitter_accounts_{now.strftime('date_%d_%m_%Y.time_%H_%M_%S')}.xlsx")
