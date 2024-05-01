@@ -16,6 +16,7 @@ from tweepy_manager.modules.request_accounts_info import update_accounts_info
 from tweepy_manager.modules.follow import follow
 from tweepy_manager.modules.quote_tweet import quote
 from tweepy_manager.modules.tags import add_tag
+from tweepy_manager.modules.enable_totp import enable_totp
 
 
 MODULES = {
@@ -26,6 +27,7 @@ MODULES = {
     '➡️ Update accounts info': update_accounts_info,
     '➡️ Follow': follow,
     '➡️ Quote Tweet (random word)': quote,
+    '➡️ Enable TOTP (2FA)': enable_totp,
     '❌  Quit': quit,
 }
 
