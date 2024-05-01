@@ -43,7 +43,7 @@ class TwitterClient(twitter.Client):
             totp_secret=self.db_account.totp_secret,
             backup_code=self.db_account.backup_code,
             status=self.db_account.status,
-            id=twitter_account.user.id,
+            id=self.db_account.twitter_id,
         )
         super().__init__(
             account,

@@ -13,5 +13,5 @@ async def _update_account_info(twitter_account: TwitterAccount):
 
 async def update_accounts_info():
     async with AsyncSessionmaker() as session:
-        twitter_accounts = await ask_and_get_accounts(session, statuses=("UNKNOWN", "GOOD", "LOCKED"))
+        twitter_accounts = await ask_and_get_accounts(session, statuses=("UNKNOWN", "GOOD", "LOCKED", "BAD_TOKEN"))
     await process_twitter_accounts(_update_account_info, twitter_accounts)

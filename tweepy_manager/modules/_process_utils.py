@@ -17,7 +17,7 @@ async def sleep_between_retries(twitter_account: TwitterAccount, retries: int):
     if not CONFIG.CONCURRENCY.DELAY_BETWEEN_RETRIES:
         return
 
-    logger.info(f"@{twitter_account.username} (id={twitter_account.user.id})"
+    logger.info(f"@{twitter_account.username} (id={twitter_account.twitter_id})"
                 f" Sleep time: {CONFIG.CONCURRENCY.DELAY_BETWEEN_RETRIES} seconds."
                 f"\n\tОсталось попыток: {retries}")
     await asyncio.sleep(CONFIG.CONCURRENCY.DELAY_BETWEEN_RETRIES)
@@ -53,7 +53,7 @@ async def process_twitter_accounts(fn: Callable, twitter_accounts: Iterable[Twit
                     raise
 
             except curl_cffi.requests.errors.RequestsError as exc:
-                if exc.code in (23, 28, 35, 56, 7):
+                if exc.code in (23, 28, 35, 56, 7, 18):
                     logger.warning(f"{twitter_account} (May be bad or slow proxy) {exc}")
                     # повторная попытка
                 else:
