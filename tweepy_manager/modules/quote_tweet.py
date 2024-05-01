@@ -71,7 +71,7 @@ async def quote():
 
     await process_twitter_accounts(_custom_quote, twitter_accounts)
 
-    #                         tweet_to_quote      quote_tweet
+    #                         quoted_tweet: list[quote_tweet]
     sorted_quote_tweets: dict[Tweet: list[Tweet]] = defaultdict(list)
     for tweet in quote_tweets:  # type: Tweet
         sorted_quote_tweets[tweet.quoted_tweet].append(tweet)
