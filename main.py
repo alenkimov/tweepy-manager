@@ -17,6 +17,7 @@ from tweepy_manager.modules.follow import follow
 from tweepy_manager.modules.quote_tweet import quote
 from tweepy_manager.modules.tags import add_tag
 from tweepy_manager.modules.enable_totp import enable_totp
+from tweepy_manager.modules.follow_each_other import follow_each_other
 
 
 MODULES = {
@@ -28,6 +29,7 @@ MODULES = {
     '➡️ Follow': follow,
     '➡️ Quote Tweet (random word)': quote,
     '➡️ Enable TOTP (2FA)': enable_totp,
+    '➡️ Follow each other': follow_each_other,
     '❌  Quit': quit,
 }
 

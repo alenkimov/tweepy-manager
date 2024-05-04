@@ -55,15 +55,13 @@ async def get_tags(session: AsyncSession) -> list[str]:
     return list(await session.scalars(select(Tag.tag).distinct()))
 
 
-async def choose_accounts(twitter_accounts: Sequence[TwitterAccount]) -> list[TwitterAccount]:
-    # TODO           Выводить также: proxy, tags, status, id
-    accounts_dict = {str(account): account for account in twitter_accounts}
+async def choose_accounts(twitter_accounts_dict: dict[str: TwitterAccount]) -> list[TwitterAccount]:
     choices = await questionary.checkbox(
         "Choose accounts:",
-        choices=accounts_dict,
+        choices=twitter_accounts_dict,
         validate=lambda choices: True if choices else "Select at least one account!"
     ).ask_async()
-    return [accounts_dict[choice] for choice in choices]
+    return [twitter_accounts_dict[choice] for choice in choices]
 
 
 async def choose_statuses(
@@ -95,5 +93,6 @@ async def ask_and_get_accounts(
         statuses = await choose_statuses(statuses)
 
     twitter_accounts = await get_accounts(session, statuses=statuses, tags=tags)
-    twitter_accounts = await choose_accounts(twitter_accounts)
-    return twitter_accounts
+    # TODO           Выводить также: proxy, tags, status, id
+    accounts_dict = {str(account): account for account in twitter_accounts}
+    return await choose_accounts(accounts_dict)

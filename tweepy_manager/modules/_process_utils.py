@@ -23,45 +23,47 @@ async def sleep_between_retries(twitter_account: TwitterAccount, retries: int):
     await asyncio.sleep(CONFIG.CONCURRENCY.DELAY_BETWEEN_RETRIES)
 
 
-async def process_twitter_accounts(fn: Callable, twitter_accounts: Iterable[TwitterAccount]):
-    async def process_account(twitter_account):
-        retries = CONFIG.CONCURRENCY.MAX_RETRIES
-        while retries > 0:
-            try:
-                # Функции будет вызываться повторно, если не произведен выход из цикла (break)
-                await fn(twitter_account)
-                break
+async def process_account(fn, twitter_account):
+    retries = CONFIG.CONCURRENCY.MAX_RETRIES
+    while retries > 0:
+        try:
+            # Функции будет вызываться повторно, если не произведен выход из цикла (break)
+            await fn(twitter_account)
+            break
 
-            except (twitter.errors.BadAccount, twitter.errors.TwitterException) as exc:
+        except (twitter.errors.BadAccount, twitter.errors.TwitterException) as exc:
+            logger.warning(f"{twitter_account} {exc}")
+            break
+
+        except twitter.errors.HTTPException as exc:
+            if exc.response.status_code >= 500:
                 logger.warning(f"{twitter_account} {exc}")
+                # повторная попытка
+            elif 398 in exc.api_codes:
+                logger.error(f"{twitter_account} Relogin failed! Try again later")
                 break
+            elif 399 in exc.api_codes:
+                logger.error(f"{twitter_account} Account deleted! Deleting from database...")
+                async with AsyncSessionmaker() as session:
+                    await session.delete(twitter_account)
+                    await session.commit()
+                break
+            else:
+                raise
 
-            except twitter.errors.HTTPException as exc:
-                if exc.response.status_code >= 500:
-                    logger.warning(f"{twitter_account} {exc}")
-                    # повторная попытка
-                elif 398 in exc.api_codes:
-                    logger.error(f"{twitter_account} Relogin failed! Try again later")
-                    break
-                elif 399 in exc.api_codes:
-                    logger.error(f"{twitter_account} Account deleted! Deleting from database...")
-                    async with AsyncSessionmaker() as session:
-                        await session.delete(twitter_account)
-                        await session.commit()
-                    break
-                else:
-                    raise
+        except curl_cffi.requests.errors.RequestsError as exc:
+            if exc.code in (23, 28, 35, 56, 7, 18, 56):
+                logger.warning(f"{twitter_account} (May be bad or slow proxy) {exc}")
+                # повторная попытка
+            else:
+                raise
 
-            except curl_cffi.requests.errors.RequestsError as exc:
-                if exc.code in (23, 28, 35, 56, 7, 18):
-                    logger.warning(f"{twitter_account} (May be bad or slow proxy) {exc}")
-                    # повторная попытка
-                else:
-                    raise
+        retries -= 1
+        if retries > 0:
+            await sleep_between_retries(twitter_account, retries)
 
-            retries -= 1
-            if retries > 0:
-                await sleep_between_retries(twitter_account, retries)
+
+async def process_twitter_accounts(fn: Callable, twitter_accounts: Iterable[TwitterAccount]):
 
     if CONFIG.CONCURRENCY.MAX_TASKS > 1:
         # Create a semaphore with the specified max tasks
@@ -69,7 +71,7 @@ async def process_twitter_accounts(fn: Callable, twitter_accounts: Iterable[Twit
 
         async def wrapper(twitter_account):
             async with semaphore:
-                await process_account(twitter_account)
+                await process_account(fn, twitter_account)
 
         # Create a list of tasks to be executed concurrently
         tasks = [wrapper(twitter_account) for twitter_account in twitter_accounts]
@@ -78,7 +80,7 @@ async def process_twitter_accounts(fn: Callable, twitter_accounts: Iterable[Twit
         await tqdm.gather(*tasks)
     else:
         for twitter_account in tqdm(twitter_accounts):
-            await process_account(twitter_account)
+            await process_account(fn, twitter_account)
 
 
 # TODO ask_and_get_users() - В первую очередь ищет твит в бд
