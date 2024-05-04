@@ -11,6 +11,9 @@ from common.logger import setup_logger
 from tweepy_manager.paths import LOG_DIR
 from tweepy_manager.config import CONFIG
 from tweepy_manager.database import update_database_or_quite
+
+# Модули
+# TODO Сделать более красивые импорты
 from tweepy_manager.modules.import_accounts import select_and_import_table, export_to_xlsx
 from tweepy_manager.modules.request_accounts_info import update_accounts_info
 from tweepy_manager.modules.follow import follow

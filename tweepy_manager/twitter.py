@@ -7,13 +7,8 @@ from sqlalchemy import select
 import twitter
 
 from .config import CONFIG
-from .database import (
-    AsyncSessionmaker,
-    TwitterAccount,
-    TwitterUser,
-    Following,
-    Tweet,
-)
+from .database.models import TwitterAccount, TwitterUser, Following, Tweet
+from .database import AsyncSessionmaker
 
 
 async def sleep_between_actions(twitter_account: TwitterAccount):

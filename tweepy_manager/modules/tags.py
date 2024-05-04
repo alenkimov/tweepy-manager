@@ -1,8 +1,9 @@
 import questionary
 from loguru import logger
 
-from ..database import AsyncSessionmaker, Tag
+from ..database.models import Tag
 from ..database.crud import ask_and_get_accounts, get_tags, choose_accounts
+from ..database import AsyncSessionmaker
 
 
 async def add_tag():

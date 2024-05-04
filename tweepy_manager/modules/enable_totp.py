@@ -1,7 +1,8 @@
-from ..database import TwitterAccount, AsyncSessionmaker
+from ..database.models import TwitterAccount
 from ..database.crud import ask_and_get_accounts
+from ..database import AsyncSessionmaker
 from ..twitter import TwitterClient
-from ._process_utils import process_twitter_accounts
+from .process_utils import process_twitter_accounts
 
 
 async def enable_totp():

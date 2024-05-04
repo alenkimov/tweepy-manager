@@ -1,20 +1,22 @@
-import datetime
-import random
 from collections import defaultdict
 from typing import Iterable
+import datetime
+import random
 
-import twitter
-from loguru import logger
+from sqlalchemy.orm import joinedload
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload, subqueryload
+from loguru import logger
 import questionary
+import twitter
 
-from ..database import TwitterAccount, AsyncSessionmaker, Tweet
-from ..database.crud import ask_and_get_accounts
+from ..database.models import TwitterAccount, Tweet
+from ..database.crud import ask_and_get_accounts, choose_accounts
+from ..database import AsyncSessionmaker
 from ..twitter import TwitterClient
-from ._process_utils import process_twitter_accounts, ask_and_request_tweets
 from ..utils import request_english_words
 from ..paths import OUTPUT_DIR
+
+from .process_utils import process_twitter_accounts, ask_and_request_tweets
 
 
 async def _quote(twitter_account: TwitterAccount, tweets: Iterable[twitter.Tweet], texts: Iterable[str]) -> list[Tweet]:
@@ -59,7 +61,27 @@ async def quote():
     if not twitter_accounts:
         return
 
-    tweets = await ask_and_request_tweets(random.choice(twitter_accounts))
+    tweets_to_quote = await ask_and_request_tweets(random.choice(twitter_accounts))
+
+    accounts_dict = {}
+    for twitter_account in twitter_accounts:
+        key = str(twitter_account)
+        for tweet_to_quote in tweets_to_quote:
+            query = select(Tweet).options(
+                joinedload(Tweet.quoted_tweet),
+                joinedload(Tweet.retweeted_tweet),
+                joinedload(Tweet.user),
+            ).filter_by(
+                user_id=twitter_account.twitter_id,
+                quote_tweet_id=tweet_to_quote.id,
+            )
+            if existing_quote_tweet := await session.scalar(query):
+                key += f"\n✅      {tweet_to_quote.id} {tweet_to_quote.short_text}"
+            else:
+                key += f"\n❌      {tweet_to_quote.id} {tweet_to_quote.short_text}"
+        accounts_dict[key] = twitter_account
+
+    twitter_accounts = await choose_accounts(accounts_dict)
 
     if not await questionary.confirm("Resume?").ask_async():
         return
@@ -67,7 +89,7 @@ async def quote():
     quote_tweets = []
 
     async def _custom_quote(twitter_account: TwitterAccount):
-        quote_tweets.extend(await _quote(twitter_account, tweets, random.sample(english_words, len(tweets))))
+        quote_tweets.extend(await _quote(twitter_account, tweets_to_quote, random.sample(english_words, len(tweets_to_quote))))
 
     await process_twitter_accounts(_custom_quote, twitter_accounts)
 

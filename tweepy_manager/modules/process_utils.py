@@ -1,5 +1,4 @@
 import asyncio
-import random
 from typing import Callable, Iterable
 
 from loguru import logger
@@ -8,7 +7,9 @@ import twitter
 import curl_cffi
 
 from common.ask import ask_values_with_separator
-from ..database import TwitterAccount, AsyncSessionmaker
+
+from ..database.models import TwitterAccount
+from ..database import AsyncSessionmaker
 from ..twitter import TwitterClient
 from ..config import CONFIG
 
@@ -116,15 +117,14 @@ async def ask_and_request_tweets(twitter_account: TwitterAccount) -> list[twitte
     )
 
     tweets = []
+    print("Tweets:")
     async with TwitterClient(twitter_account) as twitter_client:  # type: TwitterClient
         for tweet_id in tweet_ids:
             tweet = await twitter_client.request_tweet(tweet_id)
             if tweet:
                 tweets.append(tweet)
+                print(f"\t(id={tweet.id}) {tweet.short_text}")
             else:
                 print(f"Tweet (id={tweet_id}) not found")
 
-    print("Tweets:")
-    for tweet in tweets:
-        print(f"\t(id={tweet.id}) {tweet.short_text}")
     return tweets

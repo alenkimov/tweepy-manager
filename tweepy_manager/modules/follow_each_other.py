@@ -3,11 +3,12 @@ import random
 import twitter
 from loguru import logger
 
-from ..database import TwitterAccount, AsyncSessionmaker, Tweet, TwitterUser
+from ..database.models import TwitterAccount, TwitterUser
 from ..database.crud import ask_and_get_accounts, choose_accounts
+from ..database import AsyncSessionmaker
 from ..twitter import TwitterClient
 from common.ask import ask_int
-from ._process_utils import process_account
+from .process_utils import process_account
 
 
 async def _follow(twitter_account: TwitterAccount, user: twitter.User | TwitterUser):

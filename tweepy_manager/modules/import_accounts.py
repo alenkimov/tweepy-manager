@@ -11,9 +11,10 @@ import openpyxl
 from common.excell import get_xlsx_filepaths, get_worksheets
 from common.sqlalchemy.crud import update_or_create
 
+from ..database.models import TwitterAccount, Proxy, Tag
+from ..database import AsyncSessionmaker
 from ..paths import INPUT_DIR, OUTPUT_DIR
 from ..excell import excell
-from ..database import AsyncSessionmaker, TwitterAccount, Proxy, Tag
 
 
 async def select_and_import_table():

@@ -6,7 +6,9 @@ import requests
 
 @lru_cache
 def request_english_words() -> list[str]:
-    # URL для получения списка английских слов
+    """
+    Запрашивает список английских слов.
+    """
     url = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt'
     response = requests.get(url)
     words = response.text.splitlines()

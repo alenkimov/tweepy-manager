@@ -2,10 +2,11 @@ import random
 
 import questionary
 
-from ..database import TwitterAccount, AsyncSessionmaker
+from ..database.models import TwitterAccount
 from ..database.crud import ask_and_get_accounts
+from ..database import AsyncSessionmaker
 from ..twitter import TwitterClient
-from ._process_utils import process_twitter_accounts, ask_and_request_users
+from .process_utils import process_twitter_accounts, ask_and_request_users
 
 
 async def follow():
