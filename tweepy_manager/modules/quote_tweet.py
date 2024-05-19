@@ -98,13 +98,16 @@ async def quote():
     for tweet in quote_tweets:  # type: Tweet
         sorted_quote_tweets[tweet.quoted_tweet].append(tweet)
 
+    quote_tweets_dir = OUTPUT_DIR / "quote_tweets"
+    quote_tweets_dir.mkdir(exist_ok=True)
+
     # Сохранение результатов в текстовый файл
     now = datetime.datetime.now()
     date_str = now.strftime("date_%d_%m_%Y.time_%H_%M_%S")
     for tweet, quote_tweets in sorted_quote_tweets.items():
         tweets_count = len(quote_tweets)
         filename = f"{tweets_count}_quote_tweets.id_{tweet.id}.{date_str}.txt"
-        with open(OUTPUT_DIR / filename, "w", encoding="utf-8") as file:
+        with open(quote_tweets_dir / filename, "w", encoding="utf-8") as file:
             file.write("Quoted Tweet:\n")
             file.write(f"User ID: {tweet.user.id}\n")
             file.write(f"Username: {tweet.user.username}\n")
