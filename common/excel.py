@@ -1,4 +1,5 @@
-from typing import Any, List, Dict
+from datetime import datetime
+from typing import Any
 from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
@@ -7,8 +8,10 @@ from openpyxl.styles import PatternFill
 from openpyxl.utils import get_column_letter
 
 
+RED = "90EE90"
+
+
 class Column:
-    DESCRIPTION_CELL_COLOR_IF_REQUIRED = "90EE90"
 
     def __init__(
             self,
@@ -28,11 +31,11 @@ class Column:
         self.max_length: int = max_length
 
     @property
-    def color(self):
+    def color(self) -> PatternFill | None:
         if self.required:
             return PatternFill(
-                start_color=self.DESCRIPTION_CELL_COLOR_IF_REQUIRED,
-                end_color=self.DESCRIPTION_CELL_COLOR_IF_REQUIRED,
+                start_color=RED,
+                end_color=RED,
                 fill_type="solid",
             )
 
@@ -79,19 +82,19 @@ class Excel:
         wb.save(table_filepath)
         return table_filepath
 
-    def read_worksheet(self, worksheet: Worksheet) -> List[Dict[str, Any]]:
+    def read_worksheet(self, worksheet: Worksheet) -> list[dict[str, Any]]:
         """Читает данные из таблицы начиная с третьей строки."""
         # Создаем словарь для сопоставления заголовков столбцов из файла с объектами Column
-        column_map: Dict[int, Column] = {}
+        column_map: dict[int, Column] = {}
         for i, cell in enumerate(worksheet[1], start=1):  # Предполагаем, что заголовки находятся в первой строке
             for column in self.columns:
                 if cell.value == column.full_header:
                     column_map[i] = column
                     break
 
-        data: List[Dict[str, Any]] = []
+        data: list[dict[str, Any]] = []
         for row in worksheet.iter_rows(min_row=3, values_only=True):
-            row_data: Dict[str, Any] = {}
+            row_data: dict[str, Any] = {}
             for i, value in enumerate(row, start=1):
                 column = column_map.get(i)
                 if column:
@@ -105,6 +108,40 @@ class Excel:
                 data.append(row_data)
 
         return data
+
+    def export(self, filepath: Path, data: list[dict[str, Any]]):
+        """
+        Выгружает рабочую книгу по указанному пути.
+
+        :param filepath: Путь к файлу рабочей книги.
+        :param data: Список словарей, где ключи — названия полей, а значения — данные.
+        """
+        workbook = Workbook()
+        worksheet = workbook.active
+
+        now = datetime.now()
+        worksheet.title = now.strftime("%d.%m.%Y")
+
+        # Записываем заголовки
+        for column_idx, column in enumerate(self.columns, start=1):
+            worksheet.cell(row=1, column=column_idx, value=column.full_header)
+
+        # Записываем данные
+        for row_idx, row_data in enumerate(data, start=2):
+            for column_idx, column in enumerate(self.columns, start=1):
+                if column.group_name:
+                    group_data = row_data.get(column.group_name, {})
+                    value = group_data.get(column.key, "")
+                else:
+                    value = row_data.get(column.key, "")
+                worksheet.cell(row=row_idx, column=column_idx, value=value)
+
+        # Устанавливаем ширину столбцов
+        for column_cells in worksheet.columns:
+            length = max(len(str(cell.value)) for cell in column_cells)
+            worksheet.column_dimensions[get_column_letter(column_cells[0].column)].width = length
+
+        workbook.save(filepath)
 
 
 def get_xlsx_filepaths(dirpath: Path) -> list[Path]:

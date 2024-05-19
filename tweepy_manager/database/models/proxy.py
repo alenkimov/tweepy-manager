@@ -18,7 +18,7 @@ class Proxy(Base):
 
     host:     Mapped[str] = mapped_column(String(253))
     port:     Mapped[int]
-    login:    Mapped[str] = mapped_column(String(32))
+    login:    Mapped[str] = mapped_column(String(256))
     password: Mapped[str] = mapped_column(String(128))
     protocol: Mapped[str] = mapped_column(String(10))
 

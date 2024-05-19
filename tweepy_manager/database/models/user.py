@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from datetime import datetime
 
-from sqlalchemy import String, PrimaryKeyConstraint, ForeignKey
+from sqlalchemy import String, PrimaryKeyConstraint, ForeignKey, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,7 +16,7 @@ class TwitterUser(Base):
     __tablename__ = "twitter_user"
 
     # fmt: off
-    id:              Mapped[Int_PK]
+    id:              Mapped[Int_PK] = mapped_column(BigInteger)
     # TODO Изменять TwitterAccount.username при изменении TwitterUser.username на уровне базы данных
     username:        Mapped[str | None] = mapped_column(String(100), unique=True)
     name:            Mapped[str | None] = mapped_column(String(50))

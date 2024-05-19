@@ -13,8 +13,8 @@ from tweepy_manager.config import CONFIG
 from tweepy_manager.database import update_database_or_quite
 
 # Модули
-# TODO Сделать более красивые импорты
-from tweepy_manager.modules.import_accounts import select_and_import_table, export_to_xlsx
+from tweepy_manager.modules.import_ import select_and_import_xlsx
+from tweepy_manager.modules.export import export_to_xlsx
 from tweepy_manager.modules.request_accounts_info import update_accounts_info
 from tweepy_manager.modules.follow import follow
 from tweepy_manager.modules.quote_tweet import quote
@@ -25,7 +25,7 @@ from tweepy_manager.modules.follow_each_other import follow_each_other
 
 MODULES = {
     '❤️ Channel': open_channel,
-    '➡️ Import accounts from .xlsx table': select_and_import_table,
+    '➡️ Import accounts from .xlsx table': select_and_import_xlsx,
     '➡️ Export accounts to .xlsx table': export_to_xlsx,
     '➡️ Add tag': add_tag,
     '➡️ Update accounts info': update_accounts_info,
