@@ -33,3 +33,11 @@ class CaptchaConfig(BaseModel):
 class MobileProxyConfig(BaseModel):
     PROXY: str | None = None
     CHANGE_IP_URL: str | None = None
+
+
+class DatabaseConfig(BaseModel):
+    DATABASE_NAME: str
+    USERNAME: str
+    PASSWORD: str
+    HOST: str
+    PORT: int

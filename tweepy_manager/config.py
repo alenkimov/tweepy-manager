@@ -8,6 +8,7 @@ from common.config import (
     CaptchaConfig,
     ConcurrencyConfig,
     RequestsConfig,
+    DatabaseConfig,
 )
 from .paths import CONFIG_TOML
 
@@ -18,7 +19,7 @@ class Config(BaseModel):
     TWITTER: TwitterConfig
     CAPTCHA: CaptchaConfig
     REQUESTS: RequestsConfig
+    DATABASE: DatabaseConfig
 
 
 CONFIG = Config(**load_toml(CONFIG_TOML))
-english_words: list[str] = []

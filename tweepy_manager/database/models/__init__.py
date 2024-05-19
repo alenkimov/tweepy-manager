@@ -3,6 +3,7 @@ from .account import TwitterAccount
 from .tweet import Tweet
 from .tag import Tag
 from .proxy import Proxy
+from .base import Base
 
 __all__ = [
     "TwitterUser",
@@ -11,4 +12,5 @@ __all__ = [
     "Tweet",
     "Tag",
     "Proxy",
+    "Base",
 ]
