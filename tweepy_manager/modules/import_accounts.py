@@ -41,17 +41,32 @@ async def select_and_import_table():
     print(f"Loaded {len(table_data)} rows from {selected_table_filepath.name} ({selected_worksheet_name})")
     async with AsyncSessionmaker() as session:
         for twitter_account_data in table_data:
-            twitter_account, created = await update_or_create(
-                session,
-                TwitterAccount,
-                twitter_account_data["twitter"],
-                filter_by={"auth_token": twitter_account_data["twitter"]["auth_token"]},
-            )
+            if twitter_account_data["country_code"]:  # type: str
+                twitter_account_data["country_code"] = twitter_account_data["country_code"].lower()
+
+            twitter_id = None
+            if twitter_account_data["twitter"]["id"]:
+                twitter_id = int(twitter_account_data["twitter"]["id"])
+                del twitter_account_data["twitter"]["id"]
+
+            keys = await questionary.checkbox("What to import:", choices=twitter_account_data).ask_async()
+            twitter_account_data = {key: twitter_account_data[key] for key in keys}
+
+            if twitter_id:
+                twitter_account, created = await update_or_create(
+                    session,
+                    TwitterAccount,
+                    twitter_account_data["twitter"],
+                    filter_by={"id": twitter_id},
+                )
+
+            else:
+                twitter_account = TwitterAccount(**twitter_account_data["twitter"])
+                session.add(twitter_account)
+                created = True
+
             if created: print("(NEW!) ", end="")
             print(repr(twitter_account))
-
-            if country_code := twitter_account_data.get("country_code"):  # type: str
-                twitter_account.country_code = country_code.lower()
 
             await session.commit()
 
@@ -64,6 +79,7 @@ async def select_and_import_table():
             if twitter_account_data["proxy"]:
                 parsed_proxy = parse_proxy_str(twitter_account_data["proxy"])
                 parsed_proxy["protocol"] = parsed_proxy["protocol"] or "http"
+                # TODO Не фильтровать по протоколу
                 twitter_account.proxy, created = await update_or_create(session, Proxy, parsed_proxy, filter_by=parsed_proxy)
                 if created:
                     print("\t(NEW!) ", end="")
