@@ -87,7 +87,9 @@ async def ask_and_get_accounts(
         statuses: Sequence[twitter.AccountStatus | str] | None = ("UNKNOWN", "GOOD"),
 ) -> list[TwitterAccount]:
     tags = await get_tags(session)
-    tags = await choose_tags(tags)
+
+    if tags:
+        tags = await choose_tags(tags)
 
     if statuses and len(statuses) > 1:
         statuses = await choose_statuses(statuses)
