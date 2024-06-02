@@ -94,6 +94,11 @@ class TwitterClient(twitter.Client):
         return db_tweet
 
     async def follow_and_save(self, user: twitter.User) -> bool:
+        twitter_user_data = user.model_dump(
+            include={"id", "username", "name", "created_at", "description", "location", "followers_count",
+                     "friends_count"}
+        )
+
         async with AsyncSessionmaker() as session:
             query = select(Following).options(
             ).filter_by(
@@ -104,12 +109,14 @@ class TwitterClient(twitter.Client):
                 logger.warning(f"@{self.account.username} (id={self.account.id})"
                                f" User (id={user.id}) already followed")
                 return True
+            user, _ = await update_or_create(
+                session, TwitterUser, twitter_user_data, filter_by={"id": twitter_user_data["id"]})
+            await session.commit()
 
-        followed = await super().follow(user.id)
-        if followed:
-            logger.success(f"@{self.account.username} (id={self.account.id})"
-                           f" Followed: @{user.username} (id={user.id})")
-            async with AsyncSessionmaker() as session:
+            followed = await super().follow(user.id)
+            if followed:
+                logger.success(f"@{self.account.username} (id={self.account.id})"
+                               f" Followed: @{user.username} (id={user.id})")
                 session.add(Following(user_id=self.account.id, followed_to_user_id=user.id))
                 await session.commit()
 

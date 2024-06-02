@@ -1,17 +1,17 @@
 [tool.poetry]
 name = "tweepy-manager"
-version = "0.2.0"
+version = "0.2.1"
 description = "Twitter accounts manager"
 authors = ["Alen <alen.kimov@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-tweepy-self = {git="https://github.com/alenkimov/tweepy-self"}
-better-proxy = {version="1.2.0b1", allow-prereleases=true}
+tweepy-self = "1.11.0"
+better-proxy = "1.2.0"
 questionary = "^2"
 tqdm = "^4.66"
-openpyxl = "^3.1.2"
+openpyxl = "^3.1"
 sqlalchemy = "^2"
 alembic = "^1.13"
 psycopg = {extras = ["binary"], version = "^3.1.19"}

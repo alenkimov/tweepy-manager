@@ -52,7 +52,7 @@ async def export_to_xlsx():
 
     export_dir = OUTPUT_DIR / "accounts"
     export_dir.mkdir(exist_ok=True)
-    filename = f"twitter_accounts_{datetime.now().strftime('date_%d_%m_%Y.time_%H_%M_%S')}.xlsx"
+    filename = f"twitter_accounts.{datetime.now().strftime('date_%d_%m_%Y.time_%H_%M_%S')}.xlsx"
     filepath = export_dir / filename
     excel.export(filepath, data)
     print(f"Success! {filepath}")

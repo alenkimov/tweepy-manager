@@ -29,14 +29,14 @@ class TwitterAccount(Base):
     status:      Mapped[twitter.AccountStatus] = mapped_column(default="UNKNOWN")
     country_code: Mapped[str | None] = mapped_column(String(2))
 
-    email:          Mapped[str]        = mapped_column(String(254), unique=True)
+    email:          Mapped[str | None] = mapped_column(String(254), unique=True)
     email_password: Mapped[str | None] = mapped_column(String(128))
 
-    twitter_id: Mapped[int   | None] = mapped_column(ForeignKey("twitter_user.id"))
-    user: Mapped["TwitterUser" or None] = relationship(back_populates="account")
+    twitter_id: Mapped[int            | None] = mapped_column(ForeignKey("twitter_user.id"))
+    user:       Mapped["TwitterUser" or None] = relationship(back_populates="account")
 
-    proxy_database_id: Mapped[int | None] = mapped_column(ForeignKey("proxy.database_id"))
-    proxy: Mapped["Proxy" or None] = relationship(back_populates="twitter_accounts")
+    proxy_database_id: Mapped[int      | None] = mapped_column(ForeignKey("proxy.database_id"))
+    proxy:             Mapped["Proxy" or None] = relationship(back_populates="twitter_accounts")
 
     tags: Mapped[list["Tag"]] = relationship(back_populates="twitter_account")
     # fmt: on

@@ -3,7 +3,7 @@ from datetime import datetime
 
 import twitter
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
@@ -15,20 +15,20 @@ class Tweet(Base):
     __tablename__ = "tweet"
 
     # fmt: off
-    id:              Mapped[int] = mapped_column(primary_key=True)
+    id:              Mapped[int] = mapped_column(BigInteger, primary_key=True)
     text:            Mapped[str]
     created_at:      Mapped[datetime]
-    conversation_id: Mapped[int]
+    conversation_id: Mapped[int] = mapped_column(BigInteger)
     quoted:          Mapped[bool]
     retweeted:       Mapped[bool]
     bookmarked:      Mapped[bool]
     favorited:       Mapped[bool]
     url:             Mapped[str]
 
-    user_id:            Mapped[int] = mapped_column(ForeignKey("twitter_user.id"))
+    user_id:         Mapped[int] = mapped_column(ForeignKey("twitter_user.id"))
     user:            Mapped["TwitterUser" or None] = relationship(back_populates="tweets")
 
-    quote_tweet_id:     Mapped[int | None] = mapped_column(ForeignKey("tweet.id"))
+    quote_tweet_id: Mapped[int | None] = mapped_column(ForeignKey("tweet.id"))
     # quote_tweets: Mapped[list["Tweet"]] = relationship(back_populates="quoted_tweet")
     # quoted_tweet: Mapped["Tweet" or None] = relationship(back_populates="quote_tweets", foreign_keys=[quote_tweet_id], remote_side=[id])
     quoted_tweet: Mapped["Tweet" or None] = relationship(foreign_keys=[quote_tweet_id], remote_side=[id])
