@@ -19,7 +19,7 @@ async def get_accounts(
     query = select(TwitterAccount).options(
         joinedload(TwitterAccount.proxy),
         joinedload(TwitterAccount.user),
-    )
+    ).order_by(TwitterAccount.database_id)
 
     if statuses:
         query = query.filter(TwitterAccount.status.in_(statuses))

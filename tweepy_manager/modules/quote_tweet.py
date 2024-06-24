@@ -44,7 +44,7 @@ async def _quote(twitter_account: TwitterAccount, tweets: Iterable[twitter.Tweet
 
             tweet = await twitter_client.quote_and_save(tweet_to_quote.url, text)
             quote_tweets.append(tweet)
-            logger.success(f"@{twitter_account.username} (id={twitter_account.user.id})"
+            logger.success(f"@{twitter_account.username} (id={twitter_account.twitter_id})"
                            f" Tweet Quoted"
                            f"\n\tTweet ID: {tweet.id}"
                            f"\n\tQuoted Tweet ID: {tweet_to_quote.id}"

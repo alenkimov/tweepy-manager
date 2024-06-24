@@ -57,7 +57,7 @@ async def process_account(fn, twitter_account):
                 logger.warning(f"{twitter_account} (May be bad or slow proxy) {exc}")
                 # повторная попытка
             else:
-                raise
+                break
 
         retries -= 1
         if retries > 0:

@@ -16,7 +16,7 @@ async def sleep_between_actions(twitter_account: TwitterAccount):
     if not sleep_time:
         return
 
-    logger.info(f"@{twitter_account.username} (id={twitter_account.user.id}) Sleep time: {sleep_time} seconds")
+    logger.info(f"@{twitter_account.username} (id={twitter_account.twitter_id}) Sleep time: {sleep_time} seconds")
     await asyncio.sleep(sleep_time)
 
 
